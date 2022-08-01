@@ -434,18 +434,20 @@ string get_gps()
         close(ttyfd);
         return "read error";
     }
-    LOG(INFO) << "AT+QGPSLOC=0 readbuf =" << readbuf;
+    // LOG(INFO) << "AT+QGPSLOC=0 readbuf =" << readbuf;
     vector<string> param_list;
     // string str = readbuf;
     split(readbuf, ',', param_list);
     if (param_list.size() < 2)
     {
-        LOG(INFO) << "no gps sig";
+        // LOG(INFO) << "no gps sig";
+        string ret_str = " no signal";
+        return ret_str;
     }
     else
     {
-        LOG(INFO) << "param_list[1] =" << param_list[1];
-        LOG(INFO) << "param_list[2] =" << param_list[2];
+        // LOG(INFO) << "param_list[1] =" << param_list[1];
+        // LOG(INFO) << "param_list[2] =" << param_list[2];
         string Longitude_NUM = param_list[1].substr(0, 9);    //纬度 3018.3451N
         string Longitude_fanwei = param_list[1].substr(9, 1); //纬度 3018.3451N
 
@@ -498,8 +500,8 @@ string get_gps()
         dlng = (dlng * 180.0) / (a / sqrtmagic * cos(radlat) * pi);
         double mglat = lat + dlat;
         double mglng = lng + dlng;
-        LOG(INFO) << "mglng =" << to_string(mglng);
-        LOG(INFO) << "mglat =" << to_string(mglat);
+        // LOG(INFO) << "mglng =" << to_string(mglng);
+        // LOG(INFO) << "mglat =" << to_string(mglat);
 
         // gcj02_to_bd09
         double bd_lon_num;
@@ -508,22 +510,14 @@ string get_gps()
         double theta = atan2(mglat, mglng) + 0.000003 * cos(mglng * x_pi);
         bd_lon_num = z * cos(theta) + 0.0065;
         bd_lat_num = z * sin(theta) + 0.006;
-        LOG(INFO) << "=====================================";
-        LOG(INFO) << "bd_lon_num =" << to_string(bd_lon_num);
-        LOG(INFO) << "bd_lat_num =" << to_string(bd_lat_num);
-        // string slat = "3018.3451";
-        // string slng = "12021.9479";
-        // double lat;
-        // double lng;
-        // lat = stod(slat) * 100;
-        // lng = stod(slng) * 100;
-        // cout << lat << endl;
-        // cout << lng << endl;
+        // LOG(INFO) << "=====================================";
+        // LOG(INFO) << "bd_lon_num =" << to_string(bd_lon_num);
+        // LOG(INFO) << "bd_lat_num =" << to_string(bd_lat_num);
+
+        string addr = to_string(bd_lon_num) + " " + Longitude_fanwei + " " + to_string(bd_lat_num) + " " + latitude_fanwei;
+        LOG(INFO) << addr;
+        return addr;
     }
-
-    memset(readbuf, 0, sizeof(readbuf));
-
-    return sim_num;
 }
 
 /*
