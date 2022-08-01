@@ -21,6 +21,70 @@ string get_sim_num();
 int set_blue_alarm_led(int value);
 string get_gps();
 
+double x_pi = 3.14159265358979324 * 3000.0 / 180.0;
+double pi = 3.1415926535897932384626; //π
+double a = 6378245.0;                 // 长半轴
+double ee = 0.00669342162296594323;   // 扁率
+double transformlat(double lng, double lat)
+{
+    double ret = -100.0 + 2.0 * lng + 3.0 * lat + 0.2 * lat * lat + 0.1 * lng * lat + 0.2 * sqrt(fabs(lng));
+    ret += (20.0 * sin(6.0 * lng * pi) + 20.0 * sin(2.0 * lng * pi)) * 2.0 / 3.0;
+    ret += (20.0 * sin(lat * pi) + 40.0 * sin(lat / 3.0 * pi)) * 2.0 / 3.0;
+    ret += (160.0 * sin(lat / 12.0 * pi) + 320 * sin(lat * pi / 30.0)) * 2.0 / 3.0;
+    return ret;
+}
+
+double transformlng(double lng, double lat)
+{
+    double ret = 300.0 + lng + 2.0 * lat + 0.1 * lng * lng + 0.1 * lng * lat + 0.1 * sqrt(fabs(lng));
+    ret += (20.0 * sin(6.0 * lng * pi) + 20.0 * sin(2.0 * lng * pi)) * 2.0 / 3.0;
+    ret += (20.0 * sin(lng * pi) + 40.0 * sin(lng / 3.0 * pi)) * 2.0 / 3.0;
+    ret += (150.0 * sin(lng / 12.0 * pi) + 300.0 * sin(lng / 30.0 * pi)) * 2.0 / 3.0;
+    return ret;
+}
+
+/* ********************************************************/
+/**
+ * @brief  split by space
+ * 按空格(pattern)分割cli输入的命令 获取操作内容与参数
+ * 字符串处理
+ * @param[in]  cmd_str
+ * @param[in]  pattern
+ * @param[in]  param_list
+ */
+/* ********************************************************/
+void split(const char *cmd_str, char pattern, vector<string> &param_list)
+{
+    char tempstr[100];
+    memset(tempstr, 0, 100);
+
+    int cmd_str_index = 0;
+    int param_str_index = 0;
+    for (cmd_str_index = 0; cmd_str_index < strlen(cmd_str); cmd_str_index++)
+    {
+        if (cmd_str[cmd_str_index] != pattern)
+        {
+            tempstr[param_str_index++] = cmd_str[cmd_str_index];
+        }
+        else
+        {
+            /// string is valid
+            if (strlen(tempstr) > 0)
+            {
+                param_list.push_back(tempstr);
+                memset(tempstr, 0, 100);
+                param_str_index = 0;
+            }
+        }
+    }
+
+    /// last param
+    if (cmd_str[cmd_str_index] != pattern)
+    {
+        param_list.push_back(tempstr);
+    }
+}
+
 int main(int args, const char *argv[])
 {
     // if (args != 2)
@@ -29,9 +93,80 @@ int main(int args, const char *argv[])
     //     exit(EXIT_FAILURE);
     // }
     easylogginginit(); //日志初始化
+    // string Longitude_NUM = "12021.9479"; //经度 12021.9479E
+    // // string Longitude_fanwei = param_list[1].substr(9, 1); //经度12021.9479E
+
+    // string latitude_NUM = "3018.3451"; //纬度  3018.3451N
+    // // string latitude_fanwei = param_list[2].substr(10, 1); //纬度  3018.3451N
+    // double lon_num = stod(Longitude_NUM) / 100;
+    // double lat_num = stod(latitude_NUM) / 100;
+
+    // vector<string> lon_param_list;
+    // vector<string> lat_param_list;
+
+    // // string str = readbuf;
+
+    // split(to_string(lon_num).data(), '.', lon_param_list);
+    // split(to_string(lat_num).data(), '.', lat_param_list);
+
+    // double lon_xs = stod(lon_param_list[1]) / 60;
+    // double lat_xs = stod(lat_param_list[1]) / 60;
+    // // LOG(INFO) << "lon_xs " << to_string(lon_xs);
+    // // LOG(INFO) << "lat_xs " << to_string(lat_xs);
+    // while (lon_xs > 1)
+    // {
+    //     lon_xs = lon_xs / 10;
+    // }
+    // while (lat_xs > 1)
+    // {
+    //     lat_xs = lat_xs / 10;
+    // }
+    // // LOG(INFO) << "lon_xs " << to_string(lon_xs);
+    // // LOG(INFO) << "lat_xs " << to_string(lat_xs);
+
+    // lon_num = stod(lon_param_list[0]) + lon_xs;
+    // lat_num = stod(lat_param_list[0]) + lat_xs;
+
+    // // LOG(INFO) << "lon_num =" << to_string(lon_num);
+    // // LOG(INFO) << "lat_num =" << to_string(lat_num);
+    // // LOG(INFO) << "latitude_fanwei =" << latitude_fanwei;
+
+    // // wgs84_to_gcj02
+    // double lat = lat_num;
+    // double lng = lon_num;
+    // double dlat = transformlat((lng - 105.0), (lat - 35.0));
+    // double dlng = transformlng((lng - 105.0), (lat - 35.0));
+    // double radlat = lat / 180.0 * pi;
+    // double magic = sin(radlat);
+    // magic = 1 - ee * magic * magic;
+    // double sqrtmagic = sqrt(magic);
+    // dlat = (dlat * 180.0) / ((a * (1 - ee)) / (magic * sqrtmagic) * pi);
+    // dlng = (dlng * 180.0) / (a / sqrtmagic * cos(radlat) * pi);
+    // double mglat = lat + dlat;
+    // double mglng = lng + dlng;
+    // LOG(INFO) << "mglng =" << to_string(mglng);
+    // LOG(INFO) << "mglat =" << to_string(mglat);
+
+    // // gcj02_to_bd09
+    // double bd_lon_num;
+    // double bd_lat_num;
+    // double z = sqrt(mglng * mglng + mglat * mglat) + 0.00002 * sin(mglat * x_pi);
+    // double theta = atan2(mglat, mglng) + 0.000003 * cos(mglng * x_pi);
+    // bd_lon_num = z * cos(theta) + 0.0065;
+    // bd_lat_num = z * sin(theta) + 0.006;
+    // LOG(INFO) << "=====================================";
+    // LOG(INFO) << "bd_lon_num =" << to_string(bd_lon_num);
+    // LOG(INFO) << "bd_lat_num =" << to_string(bd_lat_num);
+    while (1)
+    {
+        get_gps();
+        // sleep(1);
+        // LOG(INFO) << "helloworld";
+    }
+
     // get_sim_num();
     // set_blue_alarm_led(1);
-    get_gps();
+    // get_gps();
     return 0;
 }
 /**
@@ -140,7 +275,7 @@ string get_gps()
     struct termios stdout_tio;
     struct termios tty_tio;
     char readbuf[256];
-
+    int time = 100 * 1000;
     ttyfd = open("/dev/ttyUSB2", O_RDWR | O_NOCTTY | O_NDELAY);
     if (ttyfd < 0)
     {
@@ -196,14 +331,14 @@ string get_gps()
         close(ttyfd);
         return "write error";
     }
-    usleep(500 * 1000);
+    usleep(time);
     ret = read(ttyfd, readbuf, sizeof(readbuf));
     if (ret < 0 && errno != EAGAIN)
     {
         close(ttyfd);
         return "read error";
     }
-    LOG(INFO) << "ATE0 readbuf =" << readbuf;
+    // LOG(INFO) << "ATE0 readbuf =" << readbuf;
     memset(readbuf, 0, sizeof(readbuf));
 
     ret = write(ttyfd, "at+qgps\r\n", 9); //打开GPS
@@ -212,14 +347,14 @@ string get_gps()
         close(ttyfd);
         return "write error";
     }
-    usleep(500 * 1000);
+    usleep(time);
     ret = read(ttyfd, readbuf, sizeof(readbuf));
     if (ret < 0 && errno != EAGAIN)
     {
         close(ttyfd);
         return "read error";
     }
-    LOG(INFO) << "at+qgps readbuf =" << readbuf;
+    // LOG(INFO) << "at+qgps readbuf =" << readbuf;
     memset(readbuf, 0, sizeof(readbuf));
 
     ret = write(ttyfd, "AT+QGPSCFG=\"gnssconfig\",0\r\n", 27); //配置1
@@ -228,14 +363,14 @@ string get_gps()
         close(ttyfd);
         return "write error";
     }
-    usleep(500 * 1000);
+    usleep(time);
     ret = read(ttyfd, readbuf, sizeof(readbuf));
     if (ret < 0 && errno != EAGAIN)
     {
         close(ttyfd);
         return "read error";
     }
-    LOG(INFO) << "AT+QGPSCFG=\"gnssconfig\",0 readbuf =" << readbuf;
+    // LOG(INFO) << "AT+QGPSCFG=\"gnssconfig\",0 readbuf =" << readbuf;
     memset(readbuf, 0, sizeof(readbuf));
 
     ret = write(ttyfd, "at+qgps=1\r\n", 11); //配置2
@@ -244,14 +379,14 @@ string get_gps()
         close(ttyfd);
         return "write error";
     }
-    usleep(500 * 1000);
+    usleep(time);
     ret = read(ttyfd, readbuf, sizeof(readbuf));
     if (ret < 0 && errno != EAGAIN)
     {
         close(ttyfd);
         return "read error";
     }
-    LOG(INFO) << "at+qgps=1 readbuf =" << readbuf;
+    // LOG(INFO) << "at+qgps=1 readbuf =" << readbuf;
     memset(readbuf, 0, sizeof(readbuf));
 
     ret = write(ttyfd, "AT+QGPSLOC=0\r\n", 14); //配置3
@@ -260,14 +395,14 @@ string get_gps()
         close(ttyfd);
         return "write error";
     }
-    usleep(500 * 1000);
+    usleep(time);
     ret = read(ttyfd, readbuf, sizeof(readbuf));
     if (ret < 0 && errno != EAGAIN)
     {
         close(ttyfd);
         return "read error";
     }
-    LOG(INFO) << "AT+QGPSLOC=0 readbuf =" << readbuf;
+    // LOG(INFO) << "AT+QGPSLOC=0 readbuf =" << readbuf;
     memset(readbuf, 0, sizeof(readbuf));
 
     ret = write(ttyfd, "AT+QGPSLOC=1\r\n", 14); //配置3
@@ -276,14 +411,14 @@ string get_gps()
         close(ttyfd);
         return "write error";
     }
-    usleep(500 * 1000);
+    usleep(time);
     ret = read(ttyfd, readbuf, sizeof(readbuf));
     if (ret < 0 && errno != EAGAIN)
     {
         close(ttyfd);
         return "read error";
     }
-    LOG(INFO) << "AT+QGPSLOC=1 readbuf =" << readbuf;
+    // LOG(INFO) << "AT+QGPSLOC=1 readbuf =" << readbuf;
     memset(readbuf, 0, sizeof(readbuf));
 
     ret = write(ttyfd, "AT+QGPSLOC=0\r\n", 14); //配置3
@@ -292,7 +427,7 @@ string get_gps()
         close(ttyfd);
         return "write error";
     }
-    usleep(500 * 1000);
+    usleep(time);
     ret = read(ttyfd, readbuf, sizeof(readbuf));
     if (ret < 0 && errno != EAGAIN)
     {
@@ -300,7 +435,105 @@ string get_gps()
         return "read error";
     }
     LOG(INFO) << "AT+QGPSLOC=0 readbuf =" << readbuf;
+    vector<string> param_list;
+    // string str = readbuf;
+    split(readbuf, ',', param_list);
+    if (param_list.size() < 2)
+    {
+        LOG(INFO) << "no gps sig";
+    }
+    else
+    {
+        LOG(INFO) << "param_list[1] =" << param_list[1];
+        LOG(INFO) << "param_list[2] =" << param_list[2];
+        string Longitude_NUM = param_list[1].substr(0, 9);    //纬度 3018.3451N
+        string Longitude_fanwei = param_list[1].substr(9, 1); //纬度 3018.3451N
+
+        string latitude_NUM = param_list[2].substr(0, 10);    //经度 12021.9479E
+        string latitude_fanwei = param_list[2].substr(10, 1); //经度 12021.9479E
+
+        double lon_num = stod(Longitude_NUM) / 100;
+        double lat_num = stod(latitude_NUM) / 100;
+
+        vector<string> lon_param_list;
+        vector<string> lat_param_list;
+
+        // string str = readbuf;
+
+        split(to_string(lon_num).data(), '.', lon_param_list);
+        split(to_string(lat_num).data(), '.', lat_param_list);
+
+        double lon_xs = stod(lon_param_list[1]) / 60;
+        double lat_xs = stod(lat_param_list[1]) / 60;
+        // LOG(INFO) << "lon_xs " << to_string(lon_xs);
+        // LOG(INFO) << "lat_xs " << to_string(lat_xs);
+        while (lon_xs > 1)
+        {
+            lon_xs = lon_xs / 10;
+        }
+        while (lat_xs > 1)
+        {
+            lat_xs = lat_xs / 10;
+        }
+        // LOG(INFO) << "lon_xs " << to_string(lon_xs);
+        // LOG(INFO) << "lat_xs " << to_string(lat_xs);
+
+        lon_num = stod(lon_param_list[0]) + lon_xs;
+        lat_num = stod(lat_param_list[0]) + lat_xs;
+
+        // LOG(INFO) << "lon_num =" << to_string(lon_num);
+        // LOG(INFO) << "lat_num =" << to_string(lat_num);
+        // LOG(INFO) << "latitude_fanwei =" << latitude_fanwei;
+
+        // wgs84_to_gcj02
+        double lat = lat_num;
+        double lng = lon_num;
+        double dlat = transformlat((lng - 105.0), (lat - 35.0));
+        double dlng = transformlng((lng - 105.0), (lat - 35.0));
+        double radlat = lat / 180.0 * pi;
+        double magic = sin(radlat);
+        magic = 1 - ee * magic * magic;
+        double sqrtmagic = sqrt(magic);
+        dlat = (dlat * 180.0) / ((a * (1 - ee)) / (magic * sqrtmagic) * pi);
+        dlng = (dlng * 180.0) / (a / sqrtmagic * cos(radlat) * pi);
+        double mglat = lat + dlat;
+        double mglng = lng + dlng;
+        LOG(INFO) << "mglng =" << to_string(mglng);
+        LOG(INFO) << "mglat =" << to_string(mglat);
+
+        // gcj02_to_bd09
+        double bd_lon_num;
+        double bd_lat_num;
+        double z = sqrt(mglng * mglng + mglat * mglat) + 0.00002 * sin(mglat * x_pi);
+        double theta = atan2(mglat, mglng) + 0.000003 * cos(mglng * x_pi);
+        bd_lon_num = z * cos(theta) + 0.0065;
+        bd_lat_num = z * sin(theta) + 0.006;
+        LOG(INFO) << "=====================================";
+        LOG(INFO) << "bd_lon_num =" << to_string(bd_lon_num);
+        LOG(INFO) << "bd_lat_num =" << to_string(bd_lat_num);
+        // string slat = "3018.3451";
+        // string slng = "12021.9479";
+        // double lat;
+        // double lng;
+        // lat = stod(slat) * 100;
+        // lng = stod(slng) * 100;
+        // cout << lat << endl;
+        // cout << lng << endl;
+    }
+
     memset(readbuf, 0, sizeof(readbuf));
 
     return sim_num;
 }
+
+/*
+        sleep(1);
+        string slat = "3018.3451";
+        string slng = "12021.9479";
+        double lat;
+        double lng;
+        lat = stod(slat) / 100;
+        lng = stod(slng) / 100;
+        cout << to_string(lat) << endl;
+        cout << to_string(lng) << endl;
+        */
