@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <poll.h>
 #include "my_easylogging.h"
-
+#include "zini.h"
 int ttyfd;
 int stdout_changed = 0;
 int tty_changed = 0;
@@ -282,7 +282,27 @@ int main(int args, const char *argv[])
     // LOG(INFO) << "helloworld";
     // }
 
-    Load("/home/lkt/gitlab/HelloWorld_ARM/123.ini");
+    // Load("/home/lkt/gitlab/HelloWorld_ARM/123.ini");
+    if (!ZIni::writeString("Sect1", "Key1_1", "hello", "test.ini") ||
+        !ZIni::writeString("Sect1", "Key1_2", "world", "test.ini") ||
+        !ZIni::writeInt("Sect2", "Key2_1", 1984, "test.ini") ||
+        !ZIni::writeDouble("Sect3", "Key3_1", 3.14159, "test.ini") ||
+        !ZIni::writeDouble("Sect3", "Key3_2", 2.71828, "test.ini"))
+    {
+        cout << "write failed!" << endl;
+    }
+    cout << ZIni::readString("Sect1", "Key1_1", "nothing", "test.ini") << endl;
+    cout << ZIni::readString("Sect1", "Key1_2", "nothing", "test.ini") << endl;
+    cout << ZIni::readString("Sect1", "Key1_3", "nothing", "test.ini") << endl;
+    cout << ZIni::readInt("Sect2", "Key2_1", 0, "test.ini") << endl;
+    cout << ZIni::readInt("Sect2", "Key2_2", 0, "test.ini") << endl;
+    cout << ZIni::readDouble("Sect3", "Key3_1", 0.0, "test.ini") << endl;
+    cout << ZIni::readDouble("Sect3", "Key3_2", 0.0, "test.ini") << endl;
+    cout << ZIni::readDouble("Sect3", "Key3_3", 0.0, "test.ini") << endl;
+    cout << ZIni::readString("Sect4", "Key4_1", "nothing", "test.ini") << endl;
+    cout << ZIni::readInt("Sect4", "Key4_2", 0, "test.ini") << endl;
+    cout << ZIni::readDouble("Sect4", "Key4_3", 0.0, "test.ini") << endl;
+    return 0;
 
     // get_sim_num();
     // set_blue_alarm_led(1);

@@ -47,11 +47,13 @@ include_directories ( ${CMAKE_FEATURE_PATH}/easylogging)
 include_directories ( ${CMAKE_FEATURE_PATH}/easylogging/inc)
 include_directories ( ${CMAKE_THIRDPARTY_PATH}/test1/inc)
 include_directories ( ${CMAKE_THIRDPARTY_PATH}/test2/inc)
+include_directories (./zini)
 
 #set source file 添加源文件
 aux_source_directory ( . DIR_USR_SOURCE )
 aux_source_directory (  ${CMAKE_FEATURE_PATH}/easylogging/src DIR_USR_SOURCE )
 aux_source_directory (  ${CMAKE_FEATURE_PATH}/easylogging DIR_USR_SOURCE )
+aux_source_directory (  ./zini DIR_USR_SOURCE )
 
 # aux_source_directory ( ./src DIR_USR_SOURCE )
 
