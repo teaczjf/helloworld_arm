@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <poll.h>
 #include "my_easylogging.h"
+
 int ttyfd;
 int stdout_changed = 0;
 int tty_changed = 0;
@@ -85,6 +86,123 @@ void split(const char *cmd_str, char pattern, vector<string> &param_list)
     }
 }
 
+//结构定义,这个是配置文件的定义
+typedef struct
+{
+    char ItemName[50];
+    char ItemContent[500];
+} CConfItem, *LPCConfItem;
+
+#define error_str(s, ...) \
+    std::cout << s << "，文件是: " << __FILE__ << ",行号是: " << __LINE__ << std::endl;
+
+std::map<std::string, std::vector<LPCConfItem>> m_ConfigItemList; //存储配置信息的列表
+bool Load(const char *pconfName);                                 //装载配置文件
+
+bool Load(const char *pconfName)
+{
+    FILE *fp;
+
+#if _WIN32
+    int err = fopen_s(&fp, pconfName, "r");
+    if (err != NULL)
+    {
+        error_str("读取配置文件失败") return false;
+    }
+#else
+    fp = fopen(pconfName, "r");
+    if (fp == NULL)
+    {
+        error_str("读取配置文件失败") return false;
+    }
+#endif
+
+    char linebuf[501]; //每一行的配置文件读出来放在这里
+    char m_str[100];   // Map的Ky
+
+    std::vector<LPCConfItem> local_list; //存储配置信息的列表
+
+    while (!feof(fp)) //检查文件是否结束 ，没有结束则条件成立
+    {
+
+        if (fgets(linebuf, 500, fp) == NULL) //从文件中读数据，每次读一行，一行最多不要超过500个字符
+            continue;
+
+        if (linebuf[0] == 0)
+            continue;
+
+        //处理注释
+        if (*linebuf == ';' || *linebuf == ' ' || *linebuf == '#' || *linebuf == '\t' || *linebuf == '\n')
+            continue;
+
+    lblprocstring:
+
+        //屁股后边若有换行，回车，空格等都截取掉
+        if (strlen(linebuf) > 0)
+        {
+            if (linebuf[strlen(linebuf) - 1] == 10 || linebuf[strlen(linebuf) - 1] == 13 || linebuf[strlen(linebuf) - 1] == 32)
+            {
+                linebuf[strlen(linebuf) - 1] = 0;
+                goto lblprocstring;
+            }
+        }
+        //判断是否有找到[
+        if (*linebuf == '[')
+        {
+
+            if (!local_list.empty())
+            {
+                m_ConfigItemList.insert(pair<std::string, std::vector<LPCConfItem>>(m_str, local_list)); //插入
+                memset(m_str, 0, sizeof(m_str));
+                local_list.clear();
+            }
+            char *ptemp = strchr(linebuf, ']'); //如果找到 '[' , 那么寻找 ']'
+            if (ptemp == NULL)
+            {
+                error_str("解析失败，没有找到 ']'") return false;
+            }
+#if _WIN32
+            strncpy_s(m_str, sizeof(std::string), linebuf + 1, (size_t)(ptemp - linebuf) - 1);
+#else
+            // strncpy(p_confitem->ItemName, linebuf, (size_t)(ptmp - linebuf)); //不带 '\0'
+            strncpy(m_str, linebuf, (size_t)(ptemp - linebuf + 1));           //不带 '\0'
+#endif
+            continue;
+        }
+
+        //然后寻找=
+        char *ptmp = strchr(linebuf, '=');
+        if (ptmp != NULL)
+        {
+
+            LPCConfItem p_confitem = new CConfItem;   //注意前边类型带LP，后边new这里的类型不带
+            memset(p_confitem, 0, sizeof(CConfItem)); //指针滞空
+#if _WIN32
+            strncpy_s(p_confitem->ItemName, sizeof(p_confitem->ItemName), linebuf, (size_t)(ptmp - linebuf)); //不带 '\0'
+            strcpy_s(p_confitem->ItemContent, ptmp + 1);                                                      //带 '\0'
+#else
+            strncpy(p_confitem->ItemName, linebuf, (size_t)(ptmp - linebuf)); //不带 '\0'
+            strcpy(p_confitem->ItemContent, ptmp + 1);
+#endif
+            local_list.push_back(p_confitem);
+        }
+    }
+
+    for (auto &a : m_ConfigItemList)
+    {
+
+        cout << a.first << endl;
+        for (auto &b : a.second)
+        {
+            cout << b->ItemName << endl;
+            cout << b->ItemContent << endl;
+        }
+    }
+
+    fclose(fp);
+    return true;
+}
+
 int main(int args, const char *argv[])
 {
     // if (args != 2)
@@ -93,8 +211,8 @@ int main(int args, const char *argv[])
     //     exit(EXIT_FAILURE);
     // }
     easylogginginit(); //日志初始化
-    // string Longitude_NUM = "12021.9479"; //经度 12021.9479E
-    // // string Longitude_fanwei = param_list[1].substr(9, 1); //经度12021.9479E
+                       // string Longitude_NUM = "12021.9479"; //经度 12021.9479E
+                       // // string Longitude_fanwei = param_list[1].substr(9, 1); //经度12021.9479E
 
     // string latitude_NUM = "3018.3451"; //纬度  3018.3451N
     // // string latitude_fanwei = param_list[2].substr(10, 1); //纬度  3018.3451N
@@ -157,12 +275,14 @@ int main(int args, const char *argv[])
     // LOG(INFO) << "=====================================";
     // LOG(INFO) << "bd_lon_num =" << to_string(bd_lon_num);
     // LOG(INFO) << "bd_lat_num =" << to_string(bd_lat_num);
-    while (1)
-    {
-        get_gps();
-        // sleep(1);
-        // LOG(INFO) << "helloworld";
-    }
+    // while (1)
+    // {
+    // get_gps();
+    // sleep(1);
+    // LOG(INFO) << "helloworld";
+    // }
+
+    Load("/home/lkt/gitlab/HelloWorld_ARM/123.ini");
 
     // get_sim_num();
     // set_blue_alarm_led(1);
@@ -435,6 +555,8 @@ string get_gps()
         return "read error";
     }
     // LOG(INFO) << "AT+QGPSLOC=0 readbuf =" << readbuf;
+    close(ttyfd);
+
     vector<string> param_list;
     // string str = readbuf;
     split(readbuf, ',', param_list);
